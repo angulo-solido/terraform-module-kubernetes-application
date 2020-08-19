@@ -8,15 +8,41 @@ variable "namespace" {
   description = "The namespace where this deployment will live. Must exists."
 }
 
+variable "strategy" {
+  type    = string
+  default = "RollingUpdate"
+}
+
+variable "max_unavailable" {
+  type    = string
+  default = "25%"
+}
+
+variable "max_surge" {
+  type    = string
+  default = "25%"
+}
+
 variable "image" {
   type        = any
   description = "The image to deploy."
+}
+
+variable "replicas" {
+  type        = number
+  default     = 1
+  description = "The number of replicas."
 }
 
 variable "inject_linkerd" {
   type        = bool
   default     = false
   description = "Add the necessary annotations for linkerd injection"
+}
+
+variable "host_aliases" {
+  type    = map(list(string))
+  default = {}
 }
 
 variable "args" {
@@ -40,6 +66,12 @@ variable "ports" {
 variable "environment_variables" {
   description = "Map of environment variables to inject in containers."
   type        = any
+  default     = {}
+}
+
+variable "annotations" {
+  description = "Map of annotations to add on containers."
+  type        = map(string)
   default     = {}
 }
 
@@ -116,6 +148,21 @@ variable "hpa" {
   }
 }
 
+variable "node_affinity" {
+  type    = any
+  default = {}
+}
+
+variable "pod_affinity" {
+  type    = any
+  default = {}
+}
+
+variable "pod_anti_affinity" {
+  type    = any
+  default = {}
+}
+
 locals {
 
   linkerd_annotations = {
@@ -161,6 +208,7 @@ locals {
   readiness_probes                  = try(local.single_container ? { (var.name) = var.readiness_probes } : tomap(false), var.readiness_probes)
   liveness_probes                   = try(local.single_container ? { (var.name) = var.liveness_probes } : tomap(false), var.liveness_probes)
   environment_variables_from_secret = try(local.single_container ? { (var.name) = var.environment_variables_from_secret } : tomap(false), var.environment_variables_from_secret)
+  annotations                       = try(var.inject_linkerd ? merge(local.linkerd_annotations, var.annotations) : var.annotations)
   environment_variables             = try(local.single_container ? { (var.name) = var.environment_variables } : tomap(false), var.environment_variables)
   resources_requests                = try(local.single_container ? { (var.name) = var.resources_requests } : tomap(false), var.resources_requests)
   resources_limits                  = try(local.single_container ? { (var.name) = var.resources_limits } : tomap(false), var.resources_limits)
