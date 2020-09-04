@@ -83,7 +83,8 @@ However, you have to be consistent across variables, you cannot mix styles.
 | environment\_variables\_from\_secret | Map of environment variables to inject in containers, from existing secrets.                                                                                            | `any`               | `{}`                                                                                                           |    no    |
 | host\_aliases                        | Host aliases to set up in the pod.                                                                                                                                      | `map(list(string))` | `{}`                                                                                                           |    no    |
 | hpa                                  | settings for the horizontal pod autoscaler                                                                                                                              | `any`               | <pre>{<br>  "enabled": false,<br>  "max_replicas": 6,<br>  "min_replicas": 2,<br>  "target_cpu": 80<br>}</pre> |    no    |
-| image                                | The image to deploy.                                                                                                                                                    | `any`               | n/a                                                                                                            |   yes    |
+| init_image                           | The image to deploy on init container(s).                                                                                                                               | `any`               | n/a                                                                                                            |    no    |
+| image                                | The image to deploy on container(s).                                                                                                                                    | `any`               | n/a                                                                                                            |   yes    |
 | image\_pull\_secrets                 | List of image pull secrets to use with the containers                                                                                                                   | `list(string)`      | `[]`                                                                                                           |    no    |
 | inject\_linkerd                      | Add the necessary annotations for linkerd injection                                                                                                                     | `bool`              | `false`                                                                                                        |    no    |
 | liveness\_probes                     | Map of liveness probes per container. Pass the regular terraform object as is : https://www.terraform.io/docs/providers/kubernetes/r/deployment.html#liveness_probe-1   | `any`               | n/a                                                                                                            |   yes    |
@@ -131,6 +132,17 @@ environment_variables_from_secret = {
       secret_key  = "foo-key"
     }
   }
+}
+```
+
+### init image
+
+You may define the image for each init container that will be set in this deployment.
+
+```hcl
+init_image = {
+  "init_container-a" = "init_foo:bar"
+  "init_container-b" = "init_foo-2:bar-2"
 }
 ```
 
