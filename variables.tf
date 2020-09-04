@@ -23,6 +23,12 @@ variable "max_surge" {
   default = "25%"
 }
 
+variable "init_image" {
+  type        = any
+  description = "The init image to deploy."
+  default     = {}
+}
+
 variable "image" {
   type        = any
   description = "The image to deploy."
@@ -186,6 +192,13 @@ locals {
 
   # This set of variables is to allow single containers with no "complex map" structure, to increase readability.
   # This is quite complex and with a lot of "terraformisms" but it works
+
+  init_image = try(
+    { (var.name) = tostring(var.init_image) },
+    var.init_image,
+  )
+
+  single_init_container = can(tostring(var.init_image))
 
   image = try(
     { (var.name) = tostring(var.image) },

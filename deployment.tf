@@ -220,6 +220,88 @@ resource "kubernetes_deployment" "container" {
           }
         }
 
+        dynamic "init_container" {
+          for_each = local.init_image
+          content {
+            name  = init_container.key
+            image = init_container.value
+
+            args = lookup(local.args, init_container.key, [])
+
+            command = lookup(local.command, init_container.key, [])
+
+            resources {
+              limits {
+                cpu    = lookup(lookup(local.resources_limits, init_container.key, {}), "cpu", "0.2")
+                memory = lookup(lookup(local.resources_limits, init_container.key, {}), "memory", "256Mi")
+              }
+              requests {
+                cpu    = lookup(lookup(local.resources_requests, init_container.key, {}), "cpu", "0.1")
+                memory = lookup(lookup(local.resources_requests, init_container.key, {}), "memory", "128Mi")
+              }
+            }
+
+            dynamic "port" {
+              for_each = lookup(local.ports, init_container.key, {})
+              content {
+                container_port = port.key
+                protocol       = port.value["protocol"]
+              }
+            }
+
+            dynamic "volume_mount" {
+              for_each = lookup(local.volume_mounts, init_container.key, {})
+              content {
+                name       = volume_mount.key
+                read_only  = lookup(volume_mount.value, "read_only", true)
+                mount_path = volume_mount.value["mount_path"]
+                sub_path   = lookup(volume_mount.value, "sub_path", "")
+              }
+            }
+
+            dynamic "volume_mount" {
+              for_each = lookup(local.volumes_mounts_from_config_map, init_container.key, {})
+              content {
+                name       = volume_mount.key
+                read_only  = lookup(volume_mount.value, "read_only", true)
+                mount_path = volume_mount.value["mount_path"]
+                sub_path   = lookup(volume_mount.value, "sub_path", "")
+              }
+            }
+
+            dynamic "volume_mount" {
+              for_each = lookup(local.volumes_mounts_from_secret, init_container.key, {})
+              content {
+                name       = volume_mount.key
+                read_only  = lookup(volume_mount.value, "read_only", true)
+                mount_path = volume_mount.value["mount_path"]
+                sub_path   = lookup(volume_mount.value, "sub_path", "")
+              }
+            }
+
+            dynamic "env" {
+              for_each = lookup(local.environment_variables, init_container.key, {})
+              content {
+                name  = env.key
+                value = env.value
+              }
+            }
+
+            dynamic "env" {
+              for_each = lookup(local.environment_variables_from_secret, init_container.key, {})
+              content {
+                name = env.key
+                value_from {
+                  secret_key_ref {
+                    name = env.value["secret_name"]
+                    key  = env.value["secret_key"]
+                  }
+                }
+              }
+            }
+          }
+        }
+
         dynamic "container" {
           for_each = local.image
           content {
